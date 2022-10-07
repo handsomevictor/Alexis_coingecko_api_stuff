@@ -3,6 +3,9 @@ import time
 import pandas as pd
 import os
 from tqdm import tqdm
+import requests
+from concurrent.futures import ProcessPoolExecutor
+from itertools import repeat
 
 import datetime
 import warnings
@@ -43,7 +46,29 @@ def combine(cryptos, fiats, days_list, save_dir=None):
 
 
 if __name__ == '__main__':
-    cryptos = ['bitcoin', 'ethereum', 'binancecoin', 'cardano', 'dogecoin', 'polkadot', 'ripple', 'uniswap', 'litecoin']
+    csv = pd.read_csv(os.path.join(os.getcwd(), 'ticker_cg.csv'))
+
+    url = 'https://api.coingecko.com/api/v3/coins/list'
+    response = requests.get(url)
+    content = response.json()
+    df = pd.DataFrame(content)
+    df.drop(columns=['name'])
+
+    # we create a list of strings to run our loop and an empty dataframe in which we will concatenate our results
+    ids_list = list()
+    list_ticker = csv.values.tolist()
+
+    # noinspection PyTypeChecker
+    list_ticker = [item for sublist in list_ticker for item in sublist]
+
+    res = []
+    for ticker in list_ticker:
+        ticker_index = df[df['symbol'] == ticker].id.tolist()
+        res.extend(ticker_index)
+
+    print(res)
+
+    cryptos = res
     fiats = ['usd' for i in range(len(cryptos))]
     days_list = [10000 for i in range(len(cryptos))]
 
@@ -52,4 +77,3 @@ if __name__ == '__main__':
         os.mkdir(save_dir)
 
     combine(cryptos, fiats, days_list, save_dir=save_dir)
-

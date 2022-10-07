@@ -38,11 +38,33 @@ def get_alexis_data(crypto, fiat, days):
     return df
 
 
+def get_data_and_save_file_for_concurrent(crypto, fiat, days, save_dir):
+    df = get_alexis_data(crypto, fiat, days)
+    if save_dir is not None:
+        df.to_csv(os.path.join(save_dir, f'{crypto}_{fiat}_{days_list}.csv'))
+        print(f'{crypto}_{fiat}_{days_list} is saved!')
+
+
 def combine(cryptos, fiats, days_list, save_dir=None):
     for crypto, fiat, day in tqdm(zip(cryptos, fiats, days_list), total=len(cryptos)):
         df = get_alexis_data(crypto, fiat, day)
         if save_dir is not None:
             df.to_csv(os.path.join(save_dir, f'{crypto}_{fiat}_{day}.csv'))
+        else:
+            df.to_csv(os.path.join('data_download', f'{crypto}_{fiat}_{day}.csv'))
+
+
+def combine_concurrent(crypto_list, fiat_list, days, save_dir=None, max_workers=60):
+    start_time = time.time()
+    with ProcessPoolExecutor(max_workers=max_workers) as pool:
+        list(pool.map(get_data_and_save_file_for_concurrent,
+                      crypto_list,
+                      fiat_list,
+                      repeat(days),
+                      repeat(save_dir)))
+
+    end_time = time.time()
+    print(f'Total time: {end_time - start_time:.2f} seconds')
 
 
 if __name__ == '__main__':
@@ -66,8 +88,8 @@ if __name__ == '__main__':
         ticker_index = df[df['symbol'] == ticker].id.tolist()
         res.extend(ticker_index)
 
-    print(res)
-
+    # ------------------------------------------------------------------------------------------------------------------
+    # start downloading
     cryptos = res
     fiats = ['usd' for i in range(len(cryptos))]
     days_list = [10000 for i in range(len(cryptos))]
@@ -76,4 +98,5 @@ if __name__ == '__main__':
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
 
+    # combine_concurrent(crypto_list=cryptos, fiat_list=fiats, days=10000, max_workers=10, save_dir=save_dir)
     combine(cryptos, fiats, days_list, save_dir=save_dir)

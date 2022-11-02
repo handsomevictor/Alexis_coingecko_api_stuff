@@ -67,6 +67,7 @@ def combine_concurrent(crypto_list, fiat_list, days, save_dir=None, max_workers=
     print(f'Total time: {end_time - start_time:.2f} seconds')
 
 
+# --------- The following part are only for processing the files downloaded to data_download folder --------------------
 def days_list(start_date=None, end_date=None, N=10):
     """
     :param start_date: in datetime format
@@ -154,7 +155,7 @@ if __name__ == '__main__':
     cryptos = res
     fiats = ['usd' for i in range(len(cryptos))]
 
-    # ---------
+    # ------------------------------------------------------------------------------------------------------------------
     # for reformating and combining all results
     id_list = ['bitcoin', 'ethereum-wormhole']
     days_list = [3, 99]
